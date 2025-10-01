@@ -13,7 +13,7 @@ namespace PerfilWeb.Api.Controllers
         };
 
         [HttpGet]
-        public IActionResult GetCliente()
+        public IActionResult GetClientes()
         {
             return Ok(clientes);
         }
