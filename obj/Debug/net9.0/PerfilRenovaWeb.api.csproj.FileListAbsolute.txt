@@ -30,3 +30,7 @@ C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\obj\Debug\net9.0\refi
 C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\obj\Debug\net9.0\PerfilRenovaWeb.api.pdb
 C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\obj\Debug\net9.0\PerfilRenovaWeb.api.genruntimeconfig.cache
 C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\obj\Debug\net9.0\ref\PerfilRenovaWeb.api.dll
+C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\obj\Debug\net9.0\PerfilRenovaWeb.api.sourcelink.json
+C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\vrfer\Documents\Perfil-Renova\PerfilRenovaWeb.api\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
