@@ -27,7 +27,7 @@ builder.Services.AddAuthentication(option =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = false; // alterar quando for subir para a produção, habilitado para receber req http
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {

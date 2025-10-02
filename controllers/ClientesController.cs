@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PerfilWeb.Api.Controllers
 {
@@ -12,12 +13,14 @@ namespace PerfilWeb.Api.Controllers
             new Cliente { CNPJCPF = "98765432100011", Descricao = "Cliente Mock 2", DataValidade = DateTime.Now.AddDays(-10), Bloqueado = true, Mensagem = "Assinatura vencida" }
         };
 
+        [Authorize]
         [HttpGet]
         public IActionResult GetClientes()
         {
             return Ok(clientes);
         }
 
+        [Authorize]
         [HttpPost("{cnpj}/bloquear")]
         public IActionResult Bloquear(string cnpj)
         {
@@ -29,6 +32,7 @@ namespace PerfilWeb.Api.Controllers
             return Ok(cliente);
         }
 
+        [Authorize]
         [HttpPost("{cnpj}/renovar")]
         public IActionResult Renovar(string cnpj)
         {
@@ -36,6 +40,7 @@ namespace PerfilWeb.Api.Controllers
             if (cliente == null) return NotFound();
 
             cliente.Renovar = true;
+            cliente.Bloqueado = false;
             cliente.Mensagem = "Assinatura renovada com sucesso";
             return Ok(cliente);
         }
