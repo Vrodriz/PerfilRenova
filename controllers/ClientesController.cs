@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using PerfilWeb.Api.Models;
 
 namespace PerfilWeb.Api.Controllers
 {
@@ -7,11 +8,21 @@ namespace PerfilWeb.Api.Controllers
     [Route("api/[controller]")]
     public class ClientesController : ControllerBase
     {
-        private static List<Cliente> clientes = new()
+        private static readonly List<Cliente> clientes = CriarClientesMock();
+
+        private static List<Cliente> CriarClientesMock()
         {
-            new Cliente { CNPJCPF = "12345678901234", Descricao = "Cliente Mock 1", DataValidade = DateTime.Now.AddMonths(1), Bloqueado = false, Mensagem = "Plano ativo" },
-            new Cliente { CNPJCPF = "98765432100011", Descricao = "Cliente Mock 2", DataValidade = DateTime.Now.AddDays(-10), Bloqueado = true, Mensagem = "Assinatura vencida" }
-        };
+            var lista = new List<Cliente>
+            {
+                Cliente.Criar("12345678901234", "Cliente Mock 1", DateTime.Now.AddMonths(1))
+            };
+
+            var cliente2 = Cliente.Criar("98765432100011", "Cliente Mock 2", DateTime.Now.AddDays(-10), true);
+            cliente2.Bloquear("Assinatura vencida");
+            lista.Add(cliente2);
+
+            return lista;
+        }
 
         [Authorize]
         [HttpGet]
@@ -22,39 +33,70 @@ namespace PerfilWeb.Api.Controllers
 
         [Authorize]
         [HttpPost("{cnpj}/bloquear")]
-        public IActionResult Bloquear(string cnpj)
+        public IActionResult Bloquear(string cnpj, [FromQuery] string? motivo = null)
         {
             var cliente = clientes.FirstOrDefault(c => c.CNPJCPF == cnpj);
-            if (cliente == null) return NotFound();
 
-            cliente.Bloqueado = true;
-            cliente.Mensagem = "Assinatura bloqueada manualmente";
-            return Ok(cliente);
+            if (cliente == null)
+                return NotFound(new { mensagem = "Cliente não encontrado" });
+
+            try
+            {
+                cliente.Bloquear(motivo ?? "Assinatura bloqueada manualmente");
+                return Ok(cliente);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { mensagem = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Renova definindo uma data específica de validade
+        /// </summary>
+        [Authorize]
+        [HttpPost("{cnpj}/renovar")]
+        public IActionResult Renovar(string cnpj, [FromBody] RenovacaoRequest request)
+        {
+            var cliente = clientes.FirstOrDefault(c => c.CNPJCPF == cnpj);
+
+            if (cliente == null)
+                return NotFound(new { mensagem = "Cliente não encontrado" });
+
+            try
+            {
+                cliente.Renovar(request.DataValidade);
+                return Ok(cliente);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { mensagem = ex.Message });
+            }
         }
 
         [Authorize]
-        [HttpPost("{cnpj}/renovar")]
-        public IActionResult Renovar(string cnpj)
+        [HttpPost("{cnpj}/desbloquear")]
+        public IActionResult Desbloquear(string cnpj)
         {
             var cliente = clientes.FirstOrDefault(c => c.CNPJCPF == cnpj);
-            if (cliente == null) return NotFound();
 
-            cliente.Renovar = true;
-            cliente.Bloqueado = false;
-            cliente.Mensagem = "Assinatura renovada com sucesso";
-            return Ok(cliente);
+            if (cliente == null)
+                return NotFound(new { mensagem = "Cliente não encontrado" });
+
+            try
+            {
+                cliente.Desbloquear();
+                return Ok(cliente);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { mensagem = ex.Message });
+            }
         }
     }
 
-    public class Cliente
+    public class RenovacaoRequest
     {
-        public required string CNPJCPF { get; set; }
-        public required string Descricao { get; set; }
         public DateTime DataValidade { get; set; }
-
-        public bool Bloqueado { get; set; }
-
-        public string? Mensagem { get; set; }
-        public bool Renovar { get; internal set; }
     }
 }

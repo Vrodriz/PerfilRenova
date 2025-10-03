@@ -1,8 +1,5 @@
 namespace PerfilWeb.Api.Models
 {
-    /// <summary>
-    /// Representa um cliente do sistema com informações de assinatura
-    /// </summary>
     public class Cliente
     {
         public string CNPJCPF { get; init; } = string.Empty;
@@ -11,9 +8,6 @@ namespace PerfilWeb.Api.Models
         public bool Bloqueado { get; private set; }
         public string Mensagem { get; private set; } = string.Empty;
 
-        /// <summary>
-        /// Verifica se a assinatura está válida (não vencida e não bloqueada)
-        /// </summary>
         public bool EstaValido => DataValidade >= DateTime.Now && !Bloqueado;
 
         private Cliente(string cnpjCpf, string descricao, DateTime dataValidade)
@@ -25,7 +19,7 @@ namespace PerfilWeb.Api.Models
             Mensagem = "Plano ativo";
         }
 
-        public static Cliente Criar(string cnpjCpf, string descricao, DateTime dataValidade)
+        public static Cliente Criar(string cnpjCpf, string descricao, DateTime dataValidade, bool permitirPassado = false)
         {
             if (string.IsNullOrWhiteSpace(cnpjCpf))
                 throw new ArgumentException("CNPJ/CPF é obrigatório", nameof(cnpjCpf));
@@ -33,7 +27,7 @@ namespace PerfilWeb.Api.Models
             if (string.IsNullOrWhiteSpace(descricao))
                 throw new ArgumentException("Descrição é obrigatória", nameof(descricao));
 
-            if (dataValidade <= DateTime.Now)
+            if (!permitirPassado && dataValidade < DateTime.Now)
                 throw new ArgumentException("Data de validade deve ser futura", nameof(dataValidade));
 
             return new Cliente(cnpjCpf, descricao, dataValidade);
@@ -45,24 +39,23 @@ namespace PerfilWeb.Api.Models
             Mensagem = motivo ?? "Bloqueio sem motivo especificado";
         }
 
-        public void Renovar(int meses = 1)
+        /// <summary>
+        /// Renova a assinatura até uma data específica
+        /// </summary>
+        public void Renovar(DateTime novaDataValidade)
         {
-            if (meses <= 0)
-                throw new ArgumentException("Meses deve ser maior que zero", nameof(meses));
+            if (novaDataValidade <= DateTime.Now)
+                throw new ArgumentException("Data de validade deve ser futura", nameof(novaDataValidade));
 
-            if (EstaValido)
-                DataValidade = DataValidade.AddMonths(meses);
-            else
-                DataValidade = DateTime.Now.AddMonths(meses);
-
+            DataValidade = novaDataValidade;
             Bloqueado = false;
-            Mensagem = $"Assinatura renovada por {meses} mês(es)";
+            Mensagem = $"Assinatura renovada até {novaDataValidade:dd/MM/yyyy}";
         }
 
         public void Desbloquear()
         {
             if (DateTime.Now > DataValidade)
-                throw new InvalidOperationException("Não é possivel desbloquear cliente com assinatura vencida");
+                throw new InvalidOperationException("Não é possível desbloquear cliente com assinatura vencida");
 
             Bloqueado = false;
             Mensagem = "Cliente desbloqueado";
