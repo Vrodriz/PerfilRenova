@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using PerfilWeb.Api.Models;
+using System.ComponentModel;
 
 namespace PerfilWeb.Api.Controllers
 {
@@ -19,7 +20,19 @@ namespace PerfilWeb.Api.Controllers
 
             var cliente2 = Cliente.Criar("98765432100011", "Cliente Mock 2", DateTime.Now.AddDays(-10), true);
             cliente2.Bloquear("Assinatura vencida");
+
+
+            var cliente3 = Cliente.Criar("75135455872555", "Cliente Mock 3", DateTime.Now.AddDays(0), true);
+
+
+            var cliente4 = Cliente.Criar("51841841841841", "Cliente Mock 4", DateTime.Now.AddDays(13), true);
+
             lista.Add(cliente2);
+
+            lista.Add(cliente3);
+
+            lista.Add(cliente4);
+
 
             return lista;
         }

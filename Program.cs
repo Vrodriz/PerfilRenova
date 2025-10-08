@@ -6,6 +6,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? throw new InvalidOperationException("Jwt:Key não configurado no appsettings.json");
 
@@ -20,14 +31,14 @@ if (jwtKey.Length < 16)
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
 
-builder.Services.AddAuthentication(option =>
+builder.Services.AddAuthentication(options =>
 {
-    option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // alterar quando for subir para a produção, habilitado para receber req http
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -43,8 +54,11 @@ builder.Services.AddAuthentication(option =>
 
 var app = builder.Build();
 
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

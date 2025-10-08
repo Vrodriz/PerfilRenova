@@ -1,5 +1,4 @@
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,8 +20,8 @@ namespace PerfilWeb.Api.Controllers
 
         private static List<User> users = new()
         {
-            new User { Username = "admin", Password = "adm123", Role = "Admin"},
-            new User { Username = "admin1", Password = "adm123", Role = "Admin"}
+            new User { Username = "admin@gmail.com", Password = "adm123", Role = "Admin"},
+            new User { Username = "admin1@gmail.com", Password = "adm123", Role = "Admin"}
         };
 
         [HttpPost("login")]
