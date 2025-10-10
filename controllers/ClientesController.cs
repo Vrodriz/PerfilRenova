@@ -1,8 +1,7 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using PerfilWeb.Api.Models;
-using PerfilWeb.Api.DTOs;
+using PerfilRenovaWeb.api.Dtos;
 
 namespace PerfilWeb.Api.Controllers
 {
@@ -10,95 +9,26 @@ namespace PerfilWeb.Api.Controllers
     [Route("api/[controller]")]
     public class ClientesController : ControllerBase
     {
-        private static readonly List<ClientesController> clientes = CreateMockClients();
+        private static readonly List<Client> _clients = CreateMockClients();
 
-        private static List<Client> CriarClientesMock()
+        private static List<Client> CreateMockClients()
         {
-            var lista = new List<Client>
+            var list = new List<Client>
             {
-                Client.Create(1, "12345678901234", "Cliente Mock 1", DateTime.Now.AddMonths(1))
+                Client.Create(1, "12.345.678/0001-90", "Empresa Tech Solutions Ltda", DateTime.Parse("2026-12-31")),
+                Client.Create(3, "11.222.333/0001-44", "Indústria Metal Forte S.A", DateTime.Parse("2024-03-20"), true),
+                Client.Create(6, "33.444.555/0001-66", "Construtora Alicerce", DateTime.Parse("2026-01-05")),
+                Client.Create(8, "66.777.888/0001-99", "Clínica Médica Saúde Total", DateTime.Parse("2023-12-15"), true),
+                Client.Create(9, "77.888.999/0001-22", "Supermercado Economia Ltda", DateTime.Parse("2026-06-30")),
+                Client.Create(12, "10.111.222/0001-55", "Advocacia Justiça & Direito", DateTime.Parse("2024-01-10"), true),
+                Client.Create(13, "20.222.333/0001-66", "Padaria Pão Quente", DateTime.Parse("2026-08-15"))
             };
 
-            var cliente2 = Cliente.Criar("98765432100011", "Cliente Mock 2", DateTime.Now.AddDays(-10), true);
-            cliente2.Bloquear("Assinatura vencida");
-            lista.Add(cliente2);
+            var client2 = Client.Create(2, "98.765.432/0001-10", "Comércio Digital Brasil", DateTime.Parse("2025-11-15"));
+            client2.Block(Models.ClientMessage.ManuallyBlocked);
+            list.Add(client2);
 
-            return lista;
+            return list;
         }
-
-        [Authorize]
-        [HttpGet]
-        public IActionResult GetClientes()
-        {
-            return Ok(clientes);
-        }
-
-        [Authorize]
-        [HttpPost("{cnpj}/bloquear")]
-        public IActionResult Bloquear(string cnpj, [FromQuery] string? motivo = null)
-        {
-            var cliente = clientes.FirstOrDefault(c => c.CNPJCPF == cnpj);
-
-            if (cliente == null)
-                return NotFound(new { mensagem = "Cliente não encontrado" });
-
-            try
-            {
-                cliente.Bloquear(motivo ?? "Assinatura bloqueada manualmente");
-                return Ok(cliente);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { mensagem = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Renova definindo uma data específica de validade
-        /// </summary>
-        [Authorize]
-        [HttpPost("{cnpj}/renovar")]
-        public IActionResult Renovar(string cnpj, [FromBody] RenovacaoRequest request)
-        {
-            var cliente = clientes.FirstOrDefault(c => c.CNPJCPF == cnpj);
-
-            if (cliente == null)
-                return NotFound(new { mensagem = "Cliente não encontrado" });
-
-            try
-            {
-                cliente.Renovar(request.DataValidade);
-                return Ok(cliente);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { mensagem = ex.Message });
-            }
-        }
-
-        [Authorize]
-        [HttpPost("{cnpj}/desbloquear")]
-        public IActionResult Desbloquear(string cnpj)
-        {
-            var cliente = clientes.FirstOrDefault(c => c.CNPJCPF == cnpj);
-
-            if (cliente == null)
-                return NotFound(new { mensagem = "Cliente não encontrado" });
-
-            try
-            {
-                cliente.Desbloquear();
-                return Ok(cliente);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { mensagem = ex.Message });
-            }
-        }
-    }
-
-    public class RenovacaoRequest
-    {
-        public DateTime DataValidade { get; set; }
     }
 }

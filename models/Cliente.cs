@@ -1,27 +1,27 @@
-
-
-/// <summary>
-/// Representa um cliente do sistema com controle de assinatura
-/// </summary>
-
 namespace PerfilWeb.Api.Models
 {
+    /// <summary>
+    /// Representa um cliente do sistema com controle de assinatura
+    /// </summary>
     public class Client
     {
-
+        
         public int Id { get; init; }
-        public string Document { get; init; } = string.Empty;
+        
+        public string Document { get; init; } = string.Empty; 
         public string Description { get; init; } = string.Empty;
         public DateTime ExpirationDate { get; private set; }
         public bool IsBlocked { get; private set; }
+        public bool IsPending { get; private set; } 
+        public ClientMessage Message { get; private set; }
 
-        public bool IsPending { get; private set; }
-        public ClientMessage Message { get; private set; } = ClientMessage.ActivePlan;
-
+        
         public bool IsValid => ExpirationDate >= DateTime.Now && !IsBlocked;
 
-        private Client(string document, string description, DateTime expirationDate)
+      
+        private Client(int id, string document, string description, DateTime expirationDate)
         {
+            Id = id;
             Document = document;
             Description = description;
             ExpirationDate = expirationDate;
@@ -33,18 +33,16 @@ namespace PerfilWeb.Api.Models
         /// <summary>
         /// Factory method para criar um novo cliente com validação
         /// </summary>
-
-        public static Client Create(string document, string description, DateTime expirationDate, bool allowPast = false)
+        public static Client Create(int id, string document, string description, DateTime expirationDate, bool allowPastDate = false)
         {
-            Validate(document, description, expirationDate, allowPast);
-            return new Client(document, description, expirationDate);
+            Validate(document, description, expirationDate, allowPastDate);
+            return new Client(id, document, description, expirationDate);
         }
 
         /// <summary>
         /// Valida os dados do cliente antes da criação
         /// </summary>
-
-        private static void Validate(string document, string description, DateTime expirationDate, bool allowPast)
+        private static void Validate(string document, string description, DateTime expirationDate, bool allowPastDate)
         {
             if (string.IsNullOrWhiteSpace(document))
                 throw new ArgumentException("Document is required", nameof(document));
@@ -52,10 +50,9 @@ namespace PerfilWeb.Api.Models
             if (string.IsNullOrWhiteSpace(description))
                 throw new ArgumentException("Description is required", nameof(description));
 
-            if (!allowPast && expirationDate < DateTime.Now)
+            if (!allowPastDate && expirationDate < DateTime.Now)
                 throw new ArgumentException("Expiration date must be in the future", nameof(expirationDate));
         }
-
 
         /// <summary>
         /// Bloqueia o cliente com um motivo específico
@@ -104,54 +101,51 @@ namespace PerfilWeb.Api.Models
                 Message = message.Value;
         }
 
+        /// <summary>
+        /// Atualiza múltiplos campos do cliente de uma vez
+        /// </summary>
         public void Update(bool? isBlocked = null, DateTime? expirationDate = null, bool? isPending = null)
         {
-            // Atualizar bloqueio
             if (isBlocked.HasValue)
             {
                 IsBlocked = isBlocked.Value;
+                if (isBlocked.Value)
+                    Message = ClientMessage.ManuallyBlocked;
             }
 
-            // Atualizar data (com validação)
             if (expirationDate.HasValue)
             {
                 if (expirationDate.Value <= DateTime.Now)
                     throw new ArgumentException("Expiration date must be in the future");
-
+                
                 ExpirationDate = expirationDate.Value;
+                Message = ClientMessage.Renewed;
             }
 
-            // Atualizar pendente
             if (isPending.HasValue)
-            {
                 IsPending = isPending.Value;
-            }
 
-            // Atualizar mensagem COM BASE NO ESTADO FINAL
-            UpdateMessage();
-        }
-
-        /// <summary>
-        /// Atualiza a mensagem com base no estado atual do cliente
-        /// </summary>
-        private void UpdateMessage()
-        {
-            if (IsBlocked)
+            // Se desbloqueou e renovou, considera ativo
+            if (isBlocked.HasValue && !isBlocked.Value && expirationDate.HasValue)
             {
-                Message = ClientMessage.ManuallyBlocked;
-            }
-            else if (DateTime.Now > ExpirationDate)
-            {
-                Message = ClientMessage.ExpiredSubscription;
-            }
-            else if (IsPending)
-            {
-                Message = ClientMessage.PendingPayment; // ou outro tipo de pendência
-            }
-            else
-            {
-                Message = ClientMessage.ActivePlan;
+                Message = ClientMessage.Renewed;
             }
         }
+    }
+
+    /// <summary>
+    /// Enum para as mensagens de status do cliente
+    /// </summary>
+    public enum ClientMessage
+    {
+        ActivePlan,
+        Renewed,
+        Unblocked,
+        ManuallyBlocked,
+        ExpiredSubscription,
+        BlockedWithoutReason,
+        PendingPayment,
+        PendingDocuments,
+        RenewalUnderReview
     }
 }
