@@ -1,6 +1,8 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using PerfilWeb.Api.Models;
+using PerfilWeb.Api.DTOs;
 
 namespace PerfilWeb.Api.Controllers
 {
@@ -8,13 +10,13 @@ namespace PerfilWeb.Api.Controllers
     [Route("api/[controller]")]
     public class ClientesController : ControllerBase
     {
-        private static readonly List<Cliente> clientes = CriarClientesMock();
+        private static readonly List<ClientesController> clientes = CreateMockClients();
 
-        private static List<Cliente> CriarClientesMock()
+        private static List<Client> CriarClientesMock()
         {
-            var lista = new List<Cliente>
+            var lista = new List<Client>
             {
-                Cliente.Criar("12345678901234", "Cliente Mock 1", DateTime.Now.AddMonths(1))
+                Client.Create(1, "12345678901234", "Cliente Mock 1", DateTime.Now.AddMonths(1))
             };
 
             var cliente2 = Cliente.Criar("98765432100011", "Cliente Mock 2", DateTime.Now.AddDays(-10), true);
