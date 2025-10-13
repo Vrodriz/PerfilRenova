@@ -21,7 +21,9 @@ namespace PerfilWeb.Api.Controllers
                 Client.Create(8, "66.777.888/0001-99", "Clínica Médica Saúde Total", DateTime.Parse("2023-12-15"), true),
                 Client.Create(9, "77.888.999/0001-22", "Supermercado Economia Ltda", DateTime.Parse("2026-06-30")),
                 Client.Create(12, "10.111.222/0001-55", "Advocacia Justiça & Direito", DateTime.Parse("2024-01-10"), true),
-                Client.Create(13, "20.222.333/0001-66", "Padaria Pão Quente", DateTime.Parse("2026-08-15"))
+                Client.Create(13, "20.222.333/0001-66", "Padaria Pão Quente", DateTime.Parse("2026-08-15")),
+                Client.Create(16, "20.222.333/0001-66", "Padaria Pão Quente", DateTime.Parse("2026-08-15")),
+                Client.Create(17, "20.222.333/0001-66", "Padaria Pão Quente", DateTime.Parse("2026-08-15"))
             };
 
             var client2 = Client.Create(2, "98.765.432/0001-10", "Comércio Digital Brasil", DateTime.Parse("2025-11-15"));
@@ -74,7 +76,7 @@ namespace PerfilWeb.Api.Controllers
             [FromQuery] string? search = null,
             [FromQuery] string? status = null,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
+            [FromQuery] int pageSize = 10)
         {
             var query = _clients.AsQueryable();
 
