@@ -89,8 +89,7 @@ public class BulkUpdateResponseDto
 
 ///<summary>
 /// DTO genérico de mensagem de erro
-/// <summary>
-
+/// </summary>
 
 public class ErrorResponseDto
 {
