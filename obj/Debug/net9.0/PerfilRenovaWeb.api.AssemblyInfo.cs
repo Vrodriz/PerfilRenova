@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PerfilRenovaWeb.api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+43652d98482b2932998fbae4840d7b5dc860a058")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e81b827de7f44681851cbb910b5b5ca70412d623")]
 [assembly: System.Reflection.AssemblyProductAttribute("PerfilRenovaWeb.api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PerfilRenovaWeb.api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
