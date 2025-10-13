@@ -1,4 +1,3 @@
-using System;
 
 namespace PerfilRenovaWeb.api.Dtos;
 
@@ -40,8 +39,8 @@ public class GetCLientesResponseDTO
 
 }
 
-///<summary>   
-/// DTO para parâmetros de filtro e busca
+///<summary>
+/// DTO para parâmetros de filtro e buscas
 ///</summary>
 
 public class ClientFilterDto
@@ -50,6 +49,42 @@ public class ClientFilterDto
     public string? Status { get; set; } // "Ativos", "Bloqueados", "Vencidos", "Pendentes"
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 50;
+}
+
+///<summary>
+/// DTO para resposta paginada de clientes
+///</summary>
+
+public class PaginatedClientsResponseDto
+{
+    public List<ClientResponseDtos> Data { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages { get; set; }
+}
+
+///<summary>
+/// DTO para requisição de atualização em lote
+///</summary>
+
+public class BulkUpdateRequestDto
+{
+    public List<int> ClientIds { get; set; } = new();
+    public string? Bloqueado { get; set; }
+    public string? DataValidade { get; set; }
+    public bool? Pendente { get; set; }
+}
+
+///<summary>
+/// DTO para resposta de atualização em lote
+///</summary>
+
+public class BulkUpdateResponseDto
+{
+    public List<ClientResponseDtos> UpdatedClients { get; set; } = new();
+    public int UpdatedCount { get; set; }
+    public List<string> Errors { get; set; } = new();
 }
 
 ///<summary>

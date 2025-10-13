@@ -86,3 +86,4 @@ C:\Users\55929\PerfilRenova\obj\Debug\net9.0\refint\PerfilRenovaWeb.api.dll
 C:\Users\55929\PerfilRenova\obj\Debug\net9.0\PerfilRenovaWeb.api.pdb
 C:\Users\55929\PerfilRenova\obj\Debug\net9.0\PerfilRenovaWeb.api.genruntimeconfig.cache
 C:\Users\55929\PerfilRenova\obj\Debug\net9.0\ref\PerfilRenovaWeb.api.dll
+c:\Users\55929\PerfilRenova\obj\Debug\net9.0\PerfilRenovaWeb.api.xml
