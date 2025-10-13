@@ -8,14 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+// ==============================
 // Configuração JWT
-var jwtKey = builder.Configuration["Jwt:Key"] 
+// ==============================
+var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key não configurado no appsettings.json");
 
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] 
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]
     ?? throw new InvalidOperationException("Jwt:Issuer não configurado no appsettings.json");
 
-var jwtAudience = builder.Configuration["Jwt:Audience"] 
+var jwtAudience = builder.Configuration["Jwt:Audience"]
     ?? throw new InvalidOperationException("Jwt:Audience não configurado no appsettings.json");
 
 if (jwtKey.Length < 16)
@@ -23,15 +25,14 @@ if (jwtKey.Length < 16)
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
 
-// Autenticação JWT
-builder.Services.AddAuthentication(option =>
+builder.Services.AddAuthentication(options =>
 {
-    option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Alterar para true em produção
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -45,15 +46,17 @@ builder.Services.AddAuthentication(option =>
     };
 });
 
-// ⚠️ IMPORTANTE: Configuração CORS para aceitar requisições do frontend
+// ==============================
+// Configuração CORS
+// ==============================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173",  // Vite (padrão React + Vite)
-            "http://localhost:3000",  // Create React App
-            "http://localhost:5174"   // Vite alternativo
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://localhost:5174"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -61,7 +64,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configuração do Swagger/OpenAPI
+// ==============================
+// Swagger / OpenAPI
+// ==============================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -77,7 +82,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Configuração de autenticação JWT no Swagger
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -85,7 +89,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Insira o token JWT no formato: Bearer {seu token}"
+        Description = "Insira o token JWT no formato: Bearer {seu_token}"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -103,29 +107,29 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Habilitar comentários XML (opcional, mas recomendado)
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
     if (File.Exists(xmlPath))
-    {
         options.IncludeXmlComments(xmlPath);
-    }
 });
 
 var app = builder.Build();
 
-// Habilitar Swagger em todos os ambientes (Development e Production)
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+// ==============================
+// Pipeline HTTP
+// ==============================
+if (app.Environment.IsDevelopment())
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PerfilRenova API v1");
-    options.RoutePrefix = "swagger"; // Acesse via: http://localhost:5179/swagger
-    options.DocumentTitle = "PerfilRenova API - Documentação";
-    options.DefaultModelsExpandDepth(2);
-    options.DefaultModelExpandDepth(2);
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "PerfilRenova API v1");
+        options.RoutePrefix = string.Empty;
+        options.DocumentTitle = "PerfilRenova API - Documentação";
+    });
+}
 
-// ⚠️ ORDEM IMPORTANTE: CORS deve vir antes de Authentication
+app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
