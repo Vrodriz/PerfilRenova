@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using PerfilWeb.Api.DTOs;
+using PerfilWeb.Api.Data;
+using PerfilWeb.Api.Models;
 
 namespace PerfilWeb.Api.Controllers
 {
@@ -12,18 +15,46 @@ namespace PerfilWeb.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _config;
+        private readonly ApplicationDbContext _context;
 
-        public AuthController(IConfiguration config)
+        public AuthController(IConfiguration config, ApplicationDbContext context)
         {
             _config = config;
+            _context = context;
         }
 
-        // Mock de usuários - em produção viria de um banco de dados
-        private static readonly List<User> _users = new()
+        /// <summary>
+        /// 🆕 ENDPOINT TEMPORÁRIO: Cria usuário inicial
+        /// ⚠️ REMOVER depois de criar o primeiro usuário!
+        /// </summary>
+        [HttpPost("seed-initial-user")]
+        public async Task<IActionResult> SeedInitialUser()
         {
-            new User { Username = "admin", Password = "adm123", Role = "Admin" },
-            new User { Username = "admin1", Password = "adm123", Role = "Admin" }
-        };
+            // Verifica se já existe algum usuário
+            if (await _context.Usuarios.AnyAsync())
+            {
+                return BadRequest(new { message = "Usuários já existem no sistema" });
+            }
+
+            var initialUser = new Usuario
+            {
+                Username = "admin",
+                PasswordHash = Usuario.HashPassword("adm123"),
+                Role = "Admin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Usuarios.Add(initialUser);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                message = "✅ Usuário inicial criado com sucesso!",
+                username = "admin",
+                temporaryPassword = "adm123",
+                warning = "⚠️ Troque esta senha imediatamente após o primeiro login!"
+            });
+        }
 
         /// <summary>
         /// Autentica um usuário e retorna um token JWT
@@ -31,18 +62,26 @@ namespace PerfilWeb.Api.Controllers
         [HttpPost("login")]
         [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AuthErrorResponseDto), StatusCodes.Status401Unauthorized)]
-        public ActionResult<LoginResponseDto> Login([FromBody] LoginRequestDto request)
+        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto request)
         {
-            var user = _users.FirstOrDefault(u => 
-                u.Username == request.Username && 
-                u.Password == request.Password);
+            // Busca usuário no banco
+            var user = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Username == request.Username && u.IsActive);
 
-            if (user == null)
+            // Verifica se existe e se a senha está correta
+            if (user == null || !user.VerifyPassword(request.Password))
+            {
                 return Unauthorized(new AuthErrorResponseDto 
                 { 
-                    Message = "Invalid username or password" 
+                    Message = "Usuário ou senha inválidos" 
                 });
+            }
 
+            // Atualiza último login
+            user.UpdateLastLogin();
+            await _context.SaveChangesAsync();
+
+            // Gera token
             var (token, expiresAt) = GenerateJwtToken(user);
 
             return Ok(new LoginResponseDto
@@ -54,10 +93,7 @@ namespace PerfilWeb.Api.Controllers
             });
         }
 
-        /// <summary>
-        /// Gera um token JWT para o usuário autenticado
-        /// </summary>
-        private (string Token, DateTime ExpiresAt) GenerateJwtToken(User user)
+        private (string Token, DateTime ExpiresAt) GenerateJwtToken(Usuario user)
         {
             var secretKey = _config["Jwt:Key"] 
                 ?? throw new InvalidOperationException("Jwt:Key not configured");
@@ -74,7 +110,8 @@ namespace PerfilWeb.Api.Controllers
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Role, user.Role)
+                    new Claim(ClaimTypes.Role, user.Role),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
                 }),
                 Expires = expiresAt,
                 Issuer = issuer,
@@ -89,15 +126,5 @@ namespace PerfilWeb.Api.Controllers
 
             return (tokenString, expiresAt);
         }
-    }
-
-    /// <summary>
-    /// Representa um usuário do sistema
-    /// </summary>
-    public class User
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string Role { get; set; } = "User";
     }
 }
