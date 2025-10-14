@@ -4,61 +4,15 @@
         <name>PerfilRenovaWeb.api</name>
     </assembly>
     <members>
+        <member name="M:PerfilWeb.Api.Controllers.AuthController.SeedInitialUser">
+            <summary>
+            🆕 ENDPOINT TEMPORÁRIO: Cria usuário inicial
+            ⚠️ REMOVER depois de criar o primeiro usuário!
+            </summary>
+        </member>
         <member name="M:PerfilWeb.Api.Controllers.AuthController.Login(PerfilWeb.Api.DTOs.LoginRequestDto)">
             <summary>
             Autentica um usuário e retorna um token JWT
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.AuthController.GenerateJwtToken(PerfilWeb.Api.Controllers.User)">
-            <summary>
-            Gera um token JWT para o usuário autenticado
-            </summary>
-        </member>
-        <member name="T:PerfilWeb.Api.Controllers.User">
-            <summary>
-            Representa um usuário do sistema
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.GetClientes(System.String,System.String,System.Int32,System.Int32)">
-            <summary>
-            Retorna todos os clientes com filtros e paginação
-            Compatível com as expectativas do frontend
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.BulkUpdateClients(PerfilRenovaWeb.api.Dtos.BulkUpdateRequestDto)">
-            <summary>
-            Atualiza múltiplos clientes de uma vez (Bulk Update)
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.UpdateClient(System.Int32,PerfilRenovaWeb.api.Dtos.UpdatesClientesRequestDTO)">
-            <summary>
-            Atualiza um cliente pelo ID (COMPATÍVEL COM FRONTEND)
-            Frontend chama: PATCH /api/clientes/{id}
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.BlockClient(System.Int32,System.String)">
-            <summary>
-            Bloqueia um cliente específico (rota adicional)
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.RenewSubscription(System.Int32,PerfilRenovaWeb.api.Dtos.UpdatesClientesRequestDTO)">
-            <summary>
-            Renova a assinatura de um cliente (rota adicional)
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.UnblockClient(System.Int32)">
-            <summary>
-            Desbloqueia um cliente (rota adicional)
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.MapToDto(PerfilWeb.Api.Models.Client)">
-            <summary>
-            Mapeia o modelo Client para o DTO compatível com o frontend
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Controllers.ClientesController.GetMessageText(PerfilWeb.Api.Models.ClientMessage,System.Boolean,System.DateTime)">
-            <summary>
-            Converte o enum ClientMessage para texto legível em português
             </summary>
         </member>
         <member name="T:PerfilWeb.Api.DTOs.LoginRequestDto">
@@ -76,49 +30,19 @@
             DTO para resposta de erro de autenticação
             </summary>
         </member>
-        <member name="T:PerfilWeb.Api.Models.Client">
+        <member name="M:PerfilWeb.Api.Models.Usuario.VerifyPassword(System.String)">
             <summary>
-            Representa um cliente do sistema com controle de assinatura
+            Verifica se a senha está correta
             </summary>
         </member>
-        <member name="M:PerfilWeb.Api.Models.Client.Create(System.Int32,System.String,System.String,System.DateTime,System.Boolean)">
+        <member name="M:PerfilWeb.Api.Models.Usuario.HashPassword(System.String)">
             <summary>
-            Factory method para criar um novo cliente com validação
+            Cria hash seguro da senha
             </summary>
         </member>
-        <member name="M:PerfilWeb.Api.Models.Client.Validate(System.String,System.String,System.DateTime,System.Boolean)">
+        <member name="M:PerfilWeb.Api.Models.Usuario.UpdateLastLogin">
             <summary>
-            Valida os dados do cliente antes da criação
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Models.Client.Block(PerfilWeb.Api.Models.ClientMessage)">
-            <summary>
-            Bloqueia o cliente com um motivo específico
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Models.Client.Renew(System.DateTime)">
-            <summary>
-            Renova a assinatura do cliente até uma data específica
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Models.Client.Unblock">
-            <summary>
-            Desbloqueia o cliente se a assinatura ainda estiver válida
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Models.Client.SetPending(System.Boolean,System.Nullable{PerfilWeb.Api.Models.ClientMessage})">
-            <summary>
-            Marca o cliente como pendente (aguardando documentos/pagamento)
-            </summary>
-        </member>
-        <member name="M:PerfilWeb.Api.Models.Client.Update(System.Nullable{System.Boolean},System.Nullable{System.DateTime},System.Nullable{System.Boolean})">
-            <summary>
-            Atualiza múltiplos campos do cliente de uma vez
-            </summary>
-        </member>
-        <member name="T:PerfilWeb.Api.Models.ClientMessage">
-            <summary>
-            Enum para as mensagens de status do cliente
+            Atualiza o último login
             </summary>
         </member>
         <member name="T:PerfilRenovaWeb.api.Dtos.UpdatesClientesRequestDTO">
