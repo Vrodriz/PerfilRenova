@@ -24,9 +24,21 @@ namespace PerfilWeb.Api.Controllers
         }
 
         /// <summary>
-        /// 🆕 ENDPOINT TEMPORÁRIO: Cria usuário inicial
-        /// ⚠️ REMOVER depois de criar o primeiro usuário!
+        /// Cria usuário inicial do sistema (ENDPOINT TEMPORÁRIO)
         /// </summary>
+        /// <remarks>
+        /// Este endpoint deve ser usado apenas uma vez para criar o primeiro usuário administrador.
+        ///
+        /// **ATENÇÃO:** Remova este endpoint após criar o primeiro usuário por questões de segurança.
+        ///
+        /// **Credenciais padrão:**
+        /// - Username: admin
+        /// - Password: adm123
+        ///
+        /// **IMPORTANTE:** Troque a senha imediatamente após o primeiro login!
+        /// </remarks>
+        /// <response code="200">Usuário inicial criado com sucesso</response>
+        /// <response code="400">Já existem usuários cadastrados no sistema</response>
         [HttpPost("seed-initial-user")]
         public async Task<IActionResult> SeedInitialUser()
         {
@@ -59,6 +71,35 @@ namespace PerfilWeb.Api.Controllers
         /// <summary>
         /// Autentica um usuário e retorna um token JWT
         /// </summary>
+        /// <remarks>
+        /// Realiza a autenticação do usuário verificando as credenciais fornecidas.
+        ///
+        /// **Exemplo de requisição:**
+        /// ```json
+        /// {
+        ///   "username": "admin",
+        ///   "password": "sua_senha_segura"
+        /// }
+        /// ```
+        ///
+        /// **Resposta de sucesso:**
+        /// ```json
+        /// {
+        ///   "token": "eyJhbGciOiJIUzI1NiIs...",
+        ///   "username": "admin",
+        ///   "role": "Admin",
+        ///   "expiresAt": "2025-01-15T14:30:00Z"
+        /// }
+        /// ```
+        ///
+        /// O token retornado deve ser incluído no header Authorization das próximas requisições:
+        /// ```
+        /// Authorization: Bearer {token}
+        /// ```
+        /// </remarks>
+        /// <param name="request">Credenciais de login (username e password)</param>
+        /// <response code="200">Login realizado com sucesso, retorna o token JWT</response>
+        /// <response code="401">Credenciais inválidas ou usuário inativo</response>
         [HttpPost("login")]
         [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AuthErrorResponseDto), StatusCodes.Status401Unauthorized)]

@@ -18,9 +18,34 @@ namespace PerfilWeb.Api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Lista todos os clientes com paginação e filtros
+        /// </summary>
+        /// <remarks>
+        /// Retorna uma lista paginada de clientes com opções de busca e filtro por status.
+        ///
+        /// **Filtros de status disponíveis:**
+        /// - `ativos`: Clientes não bloqueados com assinatura válida
+        /// - `bloqueado`: Clientes bloqueados
+        /// - `vencidos`: Clientes com assinatura vencida (não bloqueados)
+        /// - `pendentes`: Clientes com status pendente/em análise
+        /// - `próximos a vencer`: Clientes com assinatura válida nos próximos 15 dias
+        ///
+        /// **Exemplo de uso:**
+        /// ```
+        /// GET /api/clientes?search=12345&amp;status=ativos&amp;page=1&amp;pageSize=10
+        /// ```
+        /// </remarks>
+        /// <param name="search">Termo de busca (CNPJ/CPF ou descrição)</param>
+        /// <param name="status">Filtro de status (ativos, bloqueado, vencidos, pendentes, próximos a vencer)</param>
+        /// <param name="page">Número da página (padrão: 1)</param>
+        /// <param name="pageSize">Tamanho da página (padrão: 10)</param>
+        /// <response code="200">Lista de clientes retornada com sucesso</response>
+        /// <response code="401">Não autenticado - token ausente ou inválido</response>
         [Authorize]
         [HttpGet]
         [ProducesResponseType(typeof(PaginatedClientsResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<PaginatedClientsResponseDto>> GetClientes(
             [FromQuery] string? search = null,
             [FromQuery] string? status = null,
@@ -77,12 +102,35 @@ namespace PerfilWeb.Api.Controllers
             });
         }
 
+        /// <summary>
+        /// Atualiza informações de um cliente específico
+        /// </summary>
+        /// <remarks>
+        /// Permite atualizar status de bloqueio, data de validade e pendências do cliente.
+        ///
+        /// **Exemplo de requisição:**
+        /// ```json
+        /// {
+        ///   "bloqueado": "S",
+        ///   "dataValidade": "2025-12-31",
+        ///   "pendente": false
+        /// }
+        /// ```
+        /// </remarks>
+        /// <param name="id">ID do cliente</param>
+        /// <param name="request">Dados para atualização</param>
+        /// <response code="200">Cliente atualizado com sucesso</response>
+        /// <response code="400">Dados inválidos fornecidos</response>
+        /// <response code="404">Cliente não encontrado</response>
+        /// <response code="401">Não autenticado</response>
         [Authorize]
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(ClientResponseDtos), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ClientResponseDtos>> UpdateClient(
-            int id, 
+            int id,
             [FromBody] UpdatesClientesRequestDTO request)
         {
             var client = await _context.Clientes.FindAsync(id);
@@ -122,9 +170,31 @@ namespace PerfilWeb.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Atualiza múltiplos clientes em lote
+        /// </summary>
+        /// <remarks>
+        /// Permite atualizar vários clientes de uma só vez. Retorna a lista de clientes atualizados e possíveis erros.
+        ///
+        /// **Exemplo de requisição:**
+        /// ```json
+        /// {
+        ///   "clientIds": [1, 2, 3],
+        ///   "bloqueado": "N",
+        ///   "dataValidade": "2025-12-31",
+        ///   "pendente": false
+        /// }
+        /// ```
+        /// </remarks>
+        /// <param name="request">Lista de IDs e dados para atualização</param>
+        /// <response code="200">Atualização em lote concluída (com ou sem erros)</response>
+        /// <response code="400">Nenhum cliente fornecido</response>
+        /// <response code="401">Não autenticado</response>
         [Authorize]
         [HttpPatch("bulk")]
         [ProducesResponseType(typeof(BulkUpdateResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<BulkUpdateResponseDto>> BulkUpdateClientes(
             [FromBody] BulkUpdateRequestDto request)
         {
@@ -175,11 +245,34 @@ namespace PerfilWeb.Api.Controllers
             });
         }
 
+        /// <summary>
+        /// Bloqueia um cliente específico
+        /// </summary>
+        /// <remarks>
+        /// Bloqueia o acesso do cliente ao sistema com uma mensagem específica baseada no motivo.
+        ///
+        /// **Motivos de bloqueio:**
+        /// - `expired`: Assinatura expirada
+        /// - `payment`: Pagamento pendente
+        /// - Outros valores: Bloqueado manualmente
+        ///
+        /// **Exemplo:**
+        /// ```
+        /// POST /api/clientes/123/block?reason=payment
+        /// ```
+        /// </remarks>
+        /// <param name="id">ID do cliente a ser bloqueado</param>
+        /// <param name="reason">Motivo do bloqueio (expired, payment ou outro)</param>
+        /// <response code="200">Cliente bloqueado com sucesso</response>
+        /// <response code="404">Cliente não encontrado</response>
+        /// <response code="401">Não autenticado</response>
         [Authorize]
         [HttpPost("{id}/block")]
         [ProducesResponseType(typeof(ClientResponseDtos), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ClientResponseDtos>> BlockClient(
-            int id, 
+            int id,
             [FromQuery] string? reason = null)
         {
             var client = await _context.Clientes.FindAsync(id);
@@ -200,11 +293,33 @@ namespace PerfilWeb.Api.Controllers
             return Ok(MapToDto(client));
         }
 
+        /// <summary>
+        /// Renova a assinatura de um cliente
+        /// </summary>
+        /// <remarks>
+        /// Renova a assinatura do cliente atualizando a data de validade e desbloqueando caso esteja bloqueado.
+        ///
+        /// **Exemplo de requisição:**
+        /// ```json
+        /// {
+        ///   "dataValidade": "2026-01-15"
+        /// }
+        /// ```
+        /// </remarks>
+        /// <param name="id">ID do cliente</param>
+        /// <param name="request">Nova data de validade</param>
+        /// <response code="200">Assinatura renovada com sucesso</response>
+        /// <response code="400">Data inválida ou não fornecida</response>
+        /// <response code="404">Cliente não encontrado</response>
+        /// <response code="401">Não autenticado</response>
         [Authorize]
         [HttpPost("{id}/renew")]
         [ProducesResponseType(typeof(ClientResponseDtos), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ClientResponseDtos>> RenewSubscription(
-            int id, 
+            int id,
             [FromBody] UpdatesClientesRequestDTO request)
         {
             var client = await _context.Clientes.FindAsync(id);
@@ -235,9 +350,27 @@ namespace PerfilWeb.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Desbloqueia um cliente
+        /// </summary>
+        /// <remarks>
+        /// Remove o bloqueio de um cliente, permitindo acesso ao sistema.
+        ///
+        /// **Validações:**
+        /// - Cliente não pode estar com assinatura vencida
+        /// - Cliente deve estar atualmente bloqueado
+        /// </remarks>
+        /// <param name="id">ID do cliente a ser desbloqueado</param>
+        /// <response code="200">Cliente desbloqueado com sucesso</response>
+        /// <response code="400">Não é possível desbloquear (ex: assinatura vencida)</response>
+        /// <response code="404">Cliente não encontrado</response>
+        /// <response code="401">Não autenticado</response>
         [Authorize]
         [HttpPost("{id}/unblock")]
         [ProducesResponseType(typeof(ClientResponseDtos), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponseDto), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ClientResponseDtos>> UnblockClient(int id)
         {
             var client = await _context.Clientes.FindAsync(id);
