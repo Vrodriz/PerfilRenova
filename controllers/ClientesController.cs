@@ -28,7 +28,6 @@ namespace PerfilWeb.Api.Controllers
         /// - `ativos`: Clientes não bloqueados com assinatura válida
         /// - `bloqueado`: Clientes bloqueados
         /// - `vencidos`: Clientes com assinatura vencida (não bloqueados)
-        /// - `pendentes`: Clientes com status pendente/em análise
         /// - `próximos a vencer`: Clientes com assinatura válida nos próximos 15 dias
         ///
         /// **Exemplo de uso:**
