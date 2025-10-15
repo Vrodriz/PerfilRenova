@@ -50,7 +50,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -72,9 +72,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "http://localhost:5174"
+             "http://localhost:5173",           // desenvolvimento local
+            "http://localhost:3000",           // desenvolvimento local
+            "https://perfilrenova.com.br",     // PRODUÇÃO
+            "http://perfilrenova.com.br",      // PRODUÇÃO (sem SSL)
+            "https://www.perfilrenova.com.br", // PRODUÇÃO com www
+            "http://www.perfilrenova.com.br"   // PRODUÇÃO com www (sem SSL)
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
