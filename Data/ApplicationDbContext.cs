@@ -10,7 +10,7 @@ namespace PerfilWeb.Api.Data
         {
         }
 
-        public DbSet<Client> Clientes { get; set; }
+        public DbSet<Client> RenovaServico { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -20,7 +20,7 @@ namespace PerfilWeb.Api.Data
             // Configuração da tabela Clientes
             modelBuilder.Entity<Client>(entity =>
             {
-                entity.ToTable("Clientes");
+                entity.ToTable("RenovaServico");
 
                 entity.HasKey(e => e.Id);
 

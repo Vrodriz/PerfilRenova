@@ -51,7 +51,7 @@ namespace PerfilWeb.Api.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var query = _context.Clientes.AsQueryable();
+            var query = _context.RenovaServico.AsQueryable();
 
             // Filtro de busca
             if (!string.IsNullOrWhiteSpace(search))
@@ -132,7 +132,7 @@ namespace PerfilWeb.Api.Controllers
             int id,
             [FromBody] UpdatesClientesRequestDTO request)
         {
-            var client = await _context.Clientes.FindAsync(id);
+            var client = await _context.RenovaServico.FindAsync(id);
 
             if (client == null)
                 return NotFound(new ErrorResponseDto { Message = "Cliente não encontrado" });
@@ -203,7 +203,7 @@ namespace PerfilWeb.Api.Controllers
             var updatedClients = new List<ClientResponseDtos>();
             var errors = new List<string>();
 
-            var clients = await _context.Clientes
+            var clients = await _context.RenovaServico
                 .Where(c => request.ClientIds.Contains(c.Id))
                 .ToListAsync();
 
@@ -274,7 +274,7 @@ namespace PerfilWeb.Api.Controllers
             int id,
             [FromQuery] string? reason = null)
         {
-            var client = await _context.Clientes.FindAsync(id);
+            var client = await _context.RenovaServico.FindAsync(id);
 
             if (client == null)
                 return NotFound(new ErrorResponseDto { Message = "Cliente não encontrado" });
@@ -321,7 +321,7 @@ namespace PerfilWeb.Api.Controllers
             int id,
             [FromBody] UpdatesClientesRequestDTO request)
         {
-            var client = await _context.Clientes.FindAsync(id);
+            var client = await _context.RenovaServico.FindAsync(id);
 
             if (client == null)
                 return NotFound(new ErrorResponseDto { Message = "Cliente não encontrado" });
@@ -372,7 +372,7 @@ namespace PerfilWeb.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ClientResponseDtos>> UnblockClient(int id)
         {
-            var client = await _context.Clientes.FindAsync(id);
+            var client = await _context.RenovaServico.FindAsync(id);
 
             if (client == null)
                 return NotFound(new ErrorResponseDto { Message = "Cliente não encontrado" });
