@@ -17,7 +17,7 @@ namespace PerfilWeb.Api.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configuração da tabela Clientes
+           
             modelBuilder.Entity<Client>(entity =>
             {
                 entity.ToTable("RenovaServico");
