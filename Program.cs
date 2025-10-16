@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides; 
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -26,17 +27,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     );
 });
 
-// ==============================
-// Configuração JWT
-// ==============================
+// JWT Config
 var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key não configurado no appsettings.json");
+    ?? throw new InvalidOperationException("Jwt:Key não configurado");
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"]
-    ?? throw new InvalidOperationException("Jwt:Issuer não configurado no appsettings.json");
+    ?? throw new InvalidOperationException("Jwt:Issuer não configurado");
 
 var jwtAudience = builder.Configuration["Jwt:Audience"]
-    ?? throw new InvalidOperationException("Jwt:Audience não configurado no appsettings.json");
+    ?? throw new InvalidOperationException("Jwt:Audience não configurado");
 
 if (jwtKey.Length < 16)
     throw new InvalidOperationException("Jwt:Key deve ter pelo menos 16 caracteres");
@@ -50,7 +49,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+    options.RequireHttpsMetadata = false; 
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -64,29 +63,23 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ==============================
-// Configuração CORS
-// ==============================
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.SetIsOriginAllowed(origin =>
         {
-            // Permitir localhost (qualquer porta)
             if (origin.StartsWith("http://localhost:") ||
                 origin.StartsWith("https://localhost:"))
                 return true;
 
-            // Permitir qualquer subdomínio da Vercel
             if (origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Permitir qualquer subdomínio da Railway
             if (origin.EndsWith(".up.railway.app", StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Permitir domínio próprio
             if (origin == "https://perfilrenova.com.br" ||
                 origin == "http://perfilrenova.com.br" ||
                 origin == "https://www.perfilrenova.com.br" ||
@@ -101,9 +94,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ==============================
-// Swagger / OpenAPI
-// ==============================
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -111,7 +102,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Version = "v1",
         Title = "PerfilRenova API",
-        Description = "API para gerenciamento de clientes e assinaturas do sistema PerfilRenova",
+        Description = "API para gerenciamento de clientes e assinaturas",
         Contact = new OpenApiContact
         {
             Name = "Equipe PerfilRenova",
@@ -152,21 +143,22 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// ==============================
-// Pipeline HTTP
-// ==============================
-if (app.Environment.IsDevelopment())
+// MUDANÇAS AQUI: Configure forwarded headers para produção
+app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "PerfilRenova API v1");
-        options.RoutePrefix = string.Empty;
-        options.DocumentTitle = "PerfilRenova API - Documentação";
-    });
-}
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
-app.UseHttpsRedirection();
+// Swagger disponível em todos os ambientes
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "PerfilRenova API v1");
+    options.RoutePrefix = string.Empty;
+    options.DocumentTitle = "PerfilRenova API - Documentação";
+});
+
+
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
