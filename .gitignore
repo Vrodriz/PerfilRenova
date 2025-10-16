@@ -48,6 +48,7 @@ appsettings.Development.json
 appsettings.Production.json
 appsettings.*.json
 !appsettings.json.example
+!appsettings.json
 
 # Environment files
 .env

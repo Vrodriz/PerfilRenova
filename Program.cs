@@ -71,14 +71,30 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-             "http://localhost:5173",           // desenvolvimento local
-            "http://localhost:3000",           // desenvolvimento local
-            "https://perfilrenova.com.br",     // PRODUÇÃO
-            "http://perfilrenova.com.br",      // PRODUÇÃO (sem SSL)
-            "https://www.perfilrenova.com.br", // PRODUÇÃO com www
-            "http://www.perfilrenova.com.br"   // PRODUÇÃO com www (sem SSL)
-        )
+        policy.SetIsOriginAllowed(origin =>
+        {
+            // Permitir localhost (qualquer porta)
+            if (origin.StartsWith("http://localhost:") ||
+                origin.StartsWith("https://localhost:"))
+                return true;
+
+            // Permitir qualquer subdomínio da Vercel
+            if (origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Permitir qualquer subdomínio da Railway
+            if (origin.EndsWith(".up.railway.app", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Permitir domínio próprio
+            if (origin == "https://perfilrenova.com.br" ||
+                origin == "http://perfilrenova.com.br" ||
+                origin == "https://www.perfilrenova.com.br" ||
+                origin == "http://www.perfilrenova.com.br")
+                return true;
+
+            return false;
+        })
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials();
