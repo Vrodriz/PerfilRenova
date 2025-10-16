@@ -1,151 +1,134 @@
 namespace PerfilWeb.Api.Models
 {
-    /// <summary>
-    /// Representa um cliente do sistema com controle de assinatura
-    /// </summary>
     public class Client
     {
+        // Chave primária numérica
+        public int Id { get; set; }
         
-        public int Id { get; init; }
+        // Campos do banco
+        public string CNPJCPF { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public DateTime DataValidade { get; set; }
+        public bool Bloqueado { get; set; }
+        public string? Mensagem { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Propriedades calculadas (não vão pro banco)
+        public bool IsValid => DataValidade >= DateTime.Now && !Bloqueado;
         
-        public string Document { get; init; } = string.Empty; 
-        public string Description { get; init; } = string.Empty;
-        public DateTime ExpirationDate { get; private set; }
-        public bool IsBlocked { get; private set; }
-        public bool IsPending { get; private set; } 
-        public ClientMessage Message { get; private set; }
-
+        // Aliases para compatibilidade com código antigo
+        public string Document => CNPJCPF;
+        public string Description => Descricao;
+        public DateTime ExpirationDate => DataValidade;
+        public bool IsBlocked => Bloqueado;
         
-        public bool IsValid => ExpirationDate >= DateTime.Now && !IsBlocked;
+        public bool IsPending => 
+            Mensagem?.Contains("Aguardando", StringComparison.OrdinalIgnoreCase) == true || 
+            Mensagem?.Contains("em análise", StringComparison.OrdinalIgnoreCase) == true;
+        
+        public ClientMessage Message => ParseMessageFromString(Mensagem);
 
-      
-        private Client(int id, string document, string description, DateTime expirationDate)
-        {
-            Id = id;
-            Document = document;
-            Description = description;
-            ExpirationDate = expirationDate;
-            IsBlocked = false;
-            IsPending = false;
-            Message = ClientMessage.ActivePlan;
-        }
+        // Construtor vazio para EF Core
+        public Client() { }
 
-        /// <summary>
-        /// Factory method para criar um novo cliente com validação
-        /// </summary>
-        public static Client Create(int id, string document, string description, DateTime expirationDate, bool allowPastDate = false)
-        {
-            Validate(document, description, expirationDate, allowPastDate);
-            return new Client(id, document, description, expirationDate);
-        }
-
-        /// <summary>
-        /// Valida os dados do cliente antes da criação
-        /// </summary>
-        private static void Validate(string document, string description, DateTime expirationDate, bool allowPastDate)
-        {
-            if (string.IsNullOrWhiteSpace(document))
-                throw new ArgumentException("Document is required", nameof(document));
-
-            if (string.IsNullOrWhiteSpace(description))
-                throw new ArgumentException("Description is required", nameof(description));
-
-            if (!allowPastDate && expirationDate < DateTime.Now)
-                throw new ArgumentException("Expiration date must be in the future", nameof(expirationDate));
-        }
-
-        /// <summary>
-        /// Bloqueia o cliente com um motivo específico
-        /// </summary>
         public void Block(ClientMessage reason = ClientMessage.ManuallyBlocked)
         {
-            IsBlocked = true;
-            IsPending = false;
-            Message = reason;
+            Bloqueado = true;
+            Mensagem = GetMessageText(reason, true, DataValidade);
         }
 
-        /// <summary>
-        /// Renova a assinatura do cliente até uma data específica
-        /// </summary>
         public void Renew(DateTime newExpirationDate)
         {
             if (newExpirationDate <= DateTime.Now)
-                throw new ArgumentException("Expiration date must be in the future", nameof(newExpirationDate));
+                throw new ArgumentException("Data de validade deve ser futura");
 
-            ExpirationDate = newExpirationDate;
-            IsBlocked = false;
-            IsPending = false;
-            Message = ClientMessage.Renewed;
+            DataValidade = newExpirationDate;
+            Bloqueado = false;
+            Mensagem = $"Assinatura renovada até {newExpirationDate:dd/MM/yyyy}";
         }
 
-        /// <summary>
-        /// Desbloqueia o cliente se a assinatura ainda estiver válida
-        /// </summary>
         public void Unblock()
         {
-            if (DateTime.Now > ExpirationDate)
-                throw new InvalidOperationException("Cannot unblock client with expired subscription");
+            if (DateTime.Now > DataValidade)
+                throw new InvalidOperationException("Não é possível desbloquear cliente com assinatura vencida");
 
-            IsBlocked = false;
-            IsPending = false;
-            Message = ClientMessage.Unblocked;
+            Bloqueado = false;
+            Mensagem = "Cliente desbloqueado";
         }
 
-        /// <summary>
-        /// Marca o cliente como pendente (aguardando documentos/pagamento)
-        /// </summary>
         public void SetPending(bool isPending, ClientMessage? message = null)
         {
-            IsPending = isPending;
-            if (message.HasValue)
-                Message = message.Value;
+            if (isPending && message.HasValue)
+                Mensagem = GetMessageText(message.Value, Bloqueado, DataValidade);
         }
 
-        /// <summary>
-        /// Atualiza múltiplos campos do cliente de uma vez
-        /// </summary>
         public void Update(bool? isBlocked = null, DateTime? expirationDate = null, bool? isPending = null)
         {
             if (isBlocked.HasValue)
             {
-                IsBlocked = isBlocked.Value;
+                Bloqueado = isBlocked.Value;
                 if (isBlocked.Value)
-                    Message = ClientMessage.ManuallyBlocked;
+                    Mensagem = "Bloqueado por falta de pagamento";
             }
 
             if (expirationDate.HasValue)
             {
                 if (expirationDate.Value <= DateTime.Now)
-                    throw new ArgumentException("Expiration date must be in the future");
+                    throw new ArgumentException("Data de validade deve ser futura");
                 
-                ExpirationDate = expirationDate.Value;
-                Message = ClientMessage.Renewed;
+                DataValidade = expirationDate.Value;
+                Mensagem = $"Assinatura renovada até {expirationDate.Value:dd/MM/yyyy}";
             }
 
-            if (isPending.HasValue)
-                IsPending = isPending.Value;
+            if (isPending.HasValue && isPending.Value)
+            {
+                Mensagem = "Aguardando confirmação de pagamento";
+            }
 
-            // Se desbloqueou e renovou, considera ativo
             if (isBlocked.HasValue && !isBlocked.Value && expirationDate.HasValue)
             {
-                Message = ClientMessage.Renewed;
+                Mensagem = $"Assinatura renovada até {expirationDate.Value:dd/MM/yyyy}";
             }
         }
-    }
 
-    /// <summary>
-    /// Enum para as mensagens de status do cliente
-    /// </summary>
-    public enum ClientMessage
-    {
-        ActivePlan,
-        Renewed,
-        Unblocked,
-        ManuallyBlocked,
-        ExpiredSubscription,
-        BlockedWithoutReason,
-        PendingPayment,
-        PendingDocuments,
-        RenewalUnderReview
+        private static ClientMessage ParseMessageFromString(string? mensagem)
+        {
+            if (string.IsNullOrEmpty(mensagem))
+                return ClientMessage.ActivePlan;
+
+            var lower = mensagem.ToLower();
+            
+            if (lower.Contains("renovada")) return ClientMessage.Renewed;
+            if (lower.Contains("desbloqueado")) return ClientMessage.Unblocked;
+            if (lower.Contains("falta de pagamento")) return ClientMessage.ManuallyBlocked;
+            if (lower.Contains("expirada") || lower.Contains("vencida")) return ClientMessage.ExpiredSubscription;
+            if (lower.Contains("aguardando") && lower.Contains("pagamento")) return ClientMessage.PendingPayment;
+            if (lower.Contains("aguardando") && lower.Contains("documentos")) return ClientMessage.PendingDocuments;
+            if (lower.Contains("em análise")) return ClientMessage.RenewalUnderReview;
+            
+            return ClientMessage.ActivePlan;
+        }
+
+        private static string GetMessageText(ClientMessage message, bool isBlocked, DateTime expirationDate)
+        {
+            if (expirationDate < DateTime.Now && !isBlocked)
+                return "Assinatura expirada";
+
+            if (expirationDate < DateTime.Now && isBlocked)
+                return "Assinatura vencida e bloqueada";
+
+            return message switch
+            {
+                ClientMessage.ActivePlan => "Assinatura ativa",
+                ClientMessage.Renewed => $"Assinatura renovada até {expirationDate:dd/MM/yyyy}",
+                ClientMessage.Unblocked => "Cliente desbloqueado",
+                ClientMessage.ManuallyBlocked => "Bloqueado por falta de pagamento",
+                ClientMessage.ExpiredSubscription => "Assinatura vencida",
+                ClientMessage.PendingPayment => "Aguardando confirmação de pagamento",
+                ClientMessage.PendingDocuments => "Aguardando documentos",
+                ClientMessage.RenewalUnderReview => "Renovação em análise",
+                _ => "Status desconhecido"
+            };
+        }
     }
 }

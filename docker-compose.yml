@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mysql-dev:
+    image: mysql:8.0
+    container_name: perfilweb-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: dev123
+      MYSQL_DATABASE: perfilweb_dev
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    networks:
+      - perfilweb-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: perfilweb-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql-dev
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: dev123
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql-dev
+    networks:
+      - perfilweb-network
+
+volumes:
+  mysql_dev_data:
+
+networks:
+  perfilweb-network:
