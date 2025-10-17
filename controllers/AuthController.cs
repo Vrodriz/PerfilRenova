@@ -40,6 +40,7 @@ namespace PerfilWeb.Api.Controllers
         /// <response code="200">Usuário inicial criado com sucesso</response>
         /// <response code="400">Já existem usuários cadastrados no sistema</response>
         [HttpPost("seed-initial-user")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> SeedInitialUser()
         {
             // Verifica se já existe algum usuário
